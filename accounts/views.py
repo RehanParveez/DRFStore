@@ -7,7 +7,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 
 # Create your views here.
 
@@ -23,4 +23,4 @@ class UsersViewset(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     filterset_fields = ['email', 'created_at']
     
-    renderer_classes = [JSONRenderer]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]

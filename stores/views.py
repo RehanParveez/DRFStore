@@ -9,6 +9,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from stores.permissions import IsStoreOwnerOrReadOnly
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 # Create your views here.
 
@@ -24,6 +27,22 @@ class StoresViewset(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     filterset_fields = ['city', 'owner', 'created_at']
     
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+    def get_queryset(self):
+        users = self.request.user
+        if users.is_staff:
+            return Store.objects.all()
+        return Store.objects.filter(owner=users)
+    
+    # getting all the products of a store
+    @action(detail=True, methods=['get'])
+    def products_store(self, request, pk=None):
+        store = self.get_object()
+        products = store.products.all()
+        serializer = ProductsSerializers(products, many=True)
+        return Response(serializer.data)
+        
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializers
@@ -36,6 +55,29 @@ class CategoryViewset(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     filterset_fields = ['name', 'created_at']
     
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+    def get_queryset(self):
+        users = self.request.user
+        if users.is_staff:
+            return Category.objects.all()
+        return Category.objects.filter(store__owner = users)
+    
+    # getting the products inside the category
+    @action(detail=True, methods=['get'])
+    def products_category(self, request, pk=None):
+        category = self.get_object()
+        products = category.products.all()
+        serializer = ProductsSerializers(products, many=True)
+        return Response(serializer.data)
+    
+    # counting product in the category
+    @action(detail=True, methods=['get'])
+    def product_count(self, request, pk=None):
+        category = self.get_object()
+        count = category.products.count()
+        return Response({'total products': count})
+    
 class ProductsViewset(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductsSerializers
@@ -47,3 +89,25 @@ class ProductsViewset(viewsets.ModelViewSet):
     search_fields = ['name']
     ordering_fields = ['created_at']
     filterset_fields = ['name', 'price', 'store', 'category', 'created_at']
+    
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+    def get_queryset(self):
+        users = self.request.user
+        if users.is_staff:
+            return Product.objects.all()
+        return Product.objects.filter(store__owner=users)
+    
+    # the low stock products
+    @action(detail=False, methods=['get'])
+    def low_stock(self, request):
+        products = self.get_queryset().filter(quantity__lt=5)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+    
+    # the most expensive products
+    @action(detail=False, methods=['get'])
+    def expensive(self, request):
+        products = self.get_queryset().order_by('-price')[:7]
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)

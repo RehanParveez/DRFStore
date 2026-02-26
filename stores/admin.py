@@ -7,7 +7,7 @@ class StoreAdmin(admin.ModelAdmin):
     list_display = ['name', 'city', 'owner', 'created_at']
     
 @admin.register(Category)
-class StoreAdmin(admin.ModelAdmin):
+class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'created_at']
     
 @admin.register(Product)
