@@ -12,6 +12,7 @@ from stores.permissions import IsStoreOwnerOrReadOnly
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from stores.pagination import ProductPagination
 
 # Create your views here.
 
@@ -91,6 +92,7 @@ class ProductsViewset(viewsets.ModelViewSet):
     filterset_fields = ['name', 'price', 'store', 'category', 'created_at']
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    pagination_class =ProductPagination
     
     def get_queryset(self):
         users = self.request.user
