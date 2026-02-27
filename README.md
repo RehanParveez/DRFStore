@@ -187,3 +187,41 @@ so in simple terms the detail=false is mainly used when we are:
 
 so the detail=false means -> filtering logic on the whole data.
 
+
+## Using F Expressions + Aggregate + Sum + Count + Annotate 
+
+the simple explantion about all these is following:
+
+# F Expressions
+. the F expressions we use like when we want to do the calculations directly in our database instead of separate logic in python, means like these let us give the reference to a specific field of our model while writing a query, like a price or quantity field. so this we can use for multiplying, adding, and even comparing the fields of ours across the rows.
+
+# Aggregate
+. the aggregate functionality part offers us various methods like Sum or Count, and these we can use to combine the multiple rows of our into one value.
+
+-- for example like doing the sum of all the product values, or like counting how many related objects exist in our data.
+
+# Annotate
+. the annotate functionality part is mainly used like to add a temproary calculated field in the each object present in the queryset. so simply it does not change our database rather it allows us to perform a operation and get desired result, like a extra info.
+
+ -- like for example the number of products the each store has, and we can do all of this directly in the queryset.
+
+
+# example of using F expressions and the Sum operation:
+
+total = store.products.aggregate(total_inventory=Sum(F('price') * F('quantity')))
+
+so here in this example,
+. F('price') * F('quantity') part calculates the total value of our each product,
+. and the Sum(..) part adds the all those values in order to get the total inventory value in our specific store.
+. one more thing this i used in the inventory method with detail=True, which is like used if we want the any total value for a specific store, not all stores but a specific store.
+
+# example of using annotate and Count:
+
+stores = self.get_queryset().annotate(product_count=Count('products'))
+
+and here in this example:
+
+. the annotate(product_count=Count('products')) part is adding a temporary field which is product_count to the each store,
+. and then the Count('products') part is being used for counting like how many products belong to the each store,
+. and this i used in the strpro_count method which has the detail=False, again bcz we want the count of products for all the stores, not just one.
+

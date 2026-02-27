@@ -13,6 +13,8 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from stores.pagination import ProductPagination
+from django.db.models import Sum, F, Count
+from django.db import connection
 
 # Create your views here.
 
@@ -43,7 +45,22 @@ class StoresViewset(viewsets.ModelViewSet):
         products = store.products.all()
         serializer = ProductsSerializers(products, many=True)
         return Response(serializer.data)
-        
+    
+    # total inventory value per store
+    @action(detail=True, methods=['get'])
+    def inventory(self, request, pk=None):
+        store = self.get_object()
+        total = store.products.aggregate(total_inventory=Sum(F('price') * F('quantity')))
+        return Response(total)
+    
+    # stores with count of product
+    @action(detail=False, methods=['get'])
+    def strpro_count(self, request):
+        stores = self.get_queryset().annotate(product_count=Count('products'))
+        serializer = self.get_serializer(stores, many=True)
+        return Response(serializer.data)
+    
+    
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializers
@@ -113,3 +130,22 @@ class ProductsViewset(viewsets.ModelViewSet):
         products = self.get_queryset().order_by('-price')[:7]
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
+    
+    # showing products with store name and owner email
+    @action(detail=False, methods=['get'])
+    def info(self, request):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+               SELECT
+                     stores_product.id,
+                     stores_product.name,
+                     stores_product.price,
+                     stores_product.quantity,
+                     stores_store.name AS store_name,
+                     accounts_user.email AS owner_email
+                FROM stores_product
+                INNER JOIN stores_store ON stores_product.store_id = stores_store.id
+                INNER JOIN accounts_user ON stores_store.owner_id = accounts_user.id
+            """)
+            rows = cursor.fetchall()
+        return Response(rows)
