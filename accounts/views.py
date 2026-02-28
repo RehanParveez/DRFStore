@@ -8,6 +8,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from accounts.throttles import Login, Refresh
 
 # Create your views here.
 
@@ -24,3 +26,9 @@ class UsersViewset(viewsets.ModelViewSet):
     filterset_fields = ['email', 'created_at']
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+class AccountsTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [Login]
+
+class AccountsTokenRefreshView(TokenRefreshView):
+    throttle_classes = [Refresh]

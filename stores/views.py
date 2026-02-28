@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from stores.pagination import ProductPagination
 from django.db.models import Sum, F, Count
 from django.db import connection
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from stores.throttles import Login, Refresh
 
 # Create your views here.
 
@@ -150,3 +152,9 @@ class ProductsViewset(viewsets.ModelViewSet):
             """)
             rows = cursor.fetchall()
         return Response(rows)
+
+class StoresTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [Login]
+
+class StoresTokenRefreshView(TokenRefreshView):
+    throttle_classes = [Refresh]
