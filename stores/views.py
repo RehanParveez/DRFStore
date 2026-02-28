@@ -34,16 +34,16 @@ class StoresViewset(viewsets.ModelViewSet):
     
     def get_queryset(self):
         users = self.request.user
+        queryset1 = Store.objects.select_related('owner').prefetch_related('products')
         if users.is_staff:
-            return Store.objects.all()
-        return Store.objects.filter(owner=users)
+            return queryset1
+        return queryset1.filter(owner=users)
     
-    # getting all the products of a store
+    # getting all the products of a store   (updated)
     @action(detail=True, methods=['get'])
     def products_store(self, request, pk=None):
         store = self.get_object()
-        products = store.products.all()
-        serializer = ProductsSerializers(products, many=True)
+        serializer = ProductsSerializers(store.products.all(), many=True)
         return Response(serializer.data)
     
     # total inventory value per store
@@ -77,16 +77,16 @@ class CategoryViewset(viewsets.ModelViewSet):
     
     def get_queryset(self):
         users = self.request.user
+        queryset1 = Category.objects.prefetch_related('products__store', 'products__category')
         if users.is_staff:
-            return Category.objects.all()
-        return Category.objects.filter(store__owner = users)
+            return queryset1
+        return queryset1.filter(products__store__owner = users)
     
     # getting the products inside the category
     @action(detail=True, methods=['get'])
     def products_category(self, request, pk=None):
         category = self.get_object()
-        products = category.products.all()
-        serializer = ProductsSerializers(products, many=True)
+        serializer = ProductsSerializers(category.products.all(), many=True)
         return Response(serializer.data)
     
     # counting product in the category
@@ -113,9 +113,10 @@ class ProductsViewset(viewsets.ModelViewSet):
     
     def get_queryset(self):
         users = self.request.user
+        queryset1 = Product.objects.select_related('store', 'category', 'store__owner')
         if users.is_staff:
-            return Product.objects.all()
-        return Product.objects.filter(store__owner=users)
+            return queryset1
+        return queryset1.filter(store__owner = users)
     
     # the low stock products
     @action(detail=False, methods=['get'])

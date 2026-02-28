@@ -225,3 +225,98 @@ and here in this example:
 . and then the Count('products') part is being used for counting like how many products belong to the each store,
 . and this i used in the strpro_count method which has the detail=False, again bcz we want the count of products for all the stores, not just one.
 
+
+## Use of Nested Serializers:
+
+. the Nested serializers are mainly used when like we want to show the data of the related objects inside a serialized output of the parent objects. So thats why it helps in avoiding the making of multiple api calls and also it helps in keeping the related info together.
+
+-- And in this project, i added two basic serializers first with limited data output like:
+
+. ProductSerializer1 –> this serializer only contains the main fields of the product model like id, name, price, and the quantity.
+. StoreSerializer1 –> and this serializer only contains the main store model fields like id, name, and the city.
+. then after the addition of these two serializer, now the main serializers like:
+
+# Now in StoreSerializers:
+. products = ProductSerializer1(many = True, read_only=True) -> so this means the products of the store are nwo nested.
+. owner = UsersSerializers(read_only=True) -> and htis means the information of the store owner is nested here.
+. product_count -> and also this is the annotated field which i used earlier like to show how many products are in the store.
+
+# Now in ProductsSerializers:
+store = StoreSerializer1(read_only = True) -> this means the details of hte store are now nested inside the product.
+category = CategorySerializers(read_only = True) -> and this line menas the details of the category are nwo nested in the product.
+
+. So by doing all of this now when i will try to fetch the data related to the store or a product, i will get the related objects information automatically like without even writing the extra queries logic.
+
+## Select_Related:
+
+. the select_related is the orm method of django which is used like when we mainly want to get the foreign key relationship or the one to one related objects and  all of this is done in the same query by using the sql join logic.
+
+. And it also helps to reduce the extra queries like when we try to access the single related objects in the data, and so this makes the api working faster.
+
+## Prefetch_Related:
+
+. the prefetch_related is the orm method in django which is used like when we want to get the reverse of the foreign key or the many to many related objects and this happens in the separate query.
+
+. Also the prefetch_related method helps in avoiding the  running of the more than one queries for every object like it at once gathers all the related objects together, so thats why.
+
+
+## Now updating the get_queryset with select_related and the prefetch_related methods:
+
+. Now while using the nested serializers, like its important to use better database queries means in order to avoid the n+1 query problem, which means like when i get the related objects for every row again and again so this makes all the process very slow.
+
+. so to avoid this problem i updated the get queryset methods in all the viewsets like:
+
+# In StoresViewset:
+
+def get_queryset(self):
+    users = self.request.user
+    queryset1 = Store.objects.select_related('owner').prefetch_related('products')
+    if users.is_staff:
+        return queryset1
+    return queryset1.filter(owner=users)
+
+. the select_related('owner') part is about -> like by using the sql join, trying to get the related owner data in the same query.
+. the prefetch_related('products') part is about -> trying to get all the products of every store properly.
+. so here i mainly used it bcz it helped in supporting the nesting the ProductsSerializers1 inside the main StoreSerializers.
+
+# In CategoryViewset:
+
+def get_queryset(self):
+    users = self.request.user
+    queryset1 = Category.objects.prefetch_related('products__store', 'products__category')
+    if users.is_staff:
+        return queryset1
+    return queryset1.filter(products__store__owner=users)
+
+. In this viewset i used the prefetch_related('products__store', 'products__category') method part and this is helping -> in trying to properly get all the products of a category alongside its stores and other categories.
+
+# In ProductsViewset:
+
+def get_queryset(self):
+    users = self.request.user
+    queryset1 = Product.objects.select_related('store', 'category', 'store__owner')
+    if users.is_staff:
+        return queryset1
+    return queryset1.filter(store__owner=users)
+
+. In this viewset i again used the select_related('store', 'category', 'store__owner') method part -> to join the tables of the store, category, and of the store owner in order to reduce the queries when i properly needed to serialize the products.
+
+# Updating the Action Decorator:
+
+. So after adding hte nested serializers, i updated two of the action decorator methods like to use the related objects obtained from the prefetched and the selected queries rather writing extra query logic.
+
+-- Products of a store (products_store in StoresViewset):
+
+store = self.get_object()
+serializer = ProductsSerializers(store.products.all(), many=True)
+
+. now here the store.products.all() part is using the prefetch_related('products') which were obtained from the get_queryset and so this is a better way.
+
+-- Products of a category (products_category in CategoryViewset):
+
+category = self.get_object()
+serializer = ProductsSerializers(category.products.all(), many=True)
+
+. now here similarly like above the category.products.all() part is using the prefetch_related('products__store', 'products__category') properly collected at once and so this reduced the process of accessing the database again and again.
+
+
