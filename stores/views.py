@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from stores.models import Store, Category, Product
-from stores.serializers import StoreSerializers, CategorySerializers, ProductsSerializers
+from stores.serializers import StoreSerializers, StoreSerializer1, CategorySerializers, CategorySerializer1, ProductsSerializers, ProductSerializer1
 from rest_framework.permissions import IsAuthenticated
 from stores.permissions import IsOwnerOrReadOnly
 from rest_framework.authentication import SessionAuthentication
@@ -34,6 +34,11 @@ class StoresViewset(viewsets.ModelViewSet):
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     
+    def get_serializer_class(self):
+         if self.action in ['create', 'update', 'partial_update']:
+             return StoreSerializer1
+         return StoreSerializers
+    
     def get_queryset(self):
         users = self.request.user
         queryset1 = Store.objects.select_related('owner').prefetch_related('products')
@@ -41,7 +46,10 @@ class StoresViewset(viewsets.ModelViewSet):
             return queryset1
         return queryset1.filter(owner=users)
     
-    # getting all the products of a store   (updated)
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+    
+    # getting all the products of a store 
     @action(detail=True, methods=['get'])
     def products_store(self, request, pk=None):
         store = self.get_object()
@@ -62,11 +70,10 @@ class StoresViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(stores, many=True)
         return Response(serializer.data)
     
-    
 class CategoryViewset(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializers
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsStoreOwnerOrReadOnly]
     authentication_classes = [SessionAuthentication, JWTAuthentication]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
@@ -76,6 +83,11 @@ class CategoryViewset(viewsets.ModelViewSet):
     filterset_fields = ['name', 'created_at']
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
+    
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return CategorySerializer1
+        return CategorySerializers
     
     def get_queryset(self):
         users = self.request.user
@@ -112,6 +124,11 @@ class ProductsViewset(viewsets.ModelViewSet):
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     pagination_class =ProductPagination
+    
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return ProductSerializer1
+        return ProductsSerializers
     
     def get_queryset(self):
         users = self.request.user

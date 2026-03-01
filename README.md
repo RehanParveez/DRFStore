@@ -320,3 +320,98 @@ serializer = ProductsSerializers(category.products.all(), many=True)
 . now here similarly like above the category.products.all() part is using the prefetch_related('products__store', 'products__category') properly collected at once and so this reduced the process of accessing the database again and again.
 
 
+## Adding the Validation Logic in the Serializers:
+
+# Validation:
+. First of all the validation is simply about checking and analysing the data we are trying to send in the request and also before we save it to the present database.
+
+. As i studied in drf like most of the validation logic is used in the serializer classes, means by validating the data here, this makes sure that we are only sending the right and safe data to the database.
+
+-- And also we can do validation mainly in two ways:
+
+. Field-level validation -> this is about checking only the single value of field by using the methods like validate_ and the fieldname().
+
+. Object-level validation -> and this is about checking the use of multiple fields together and this is done by using the validate method and in the parenthesis of this method the parameters are(self, and the other one we can name as we want).
+
+The validation which i practiced today is related to:
+
+# Store Validation:
+in the StoreSerializer1, i added the simple logic of validation and practiced it using the perform create() method inside the storeviewset and it about functionality like:
+
+. the owner of the store automatically gets assign to the user who is making the request,
+. and this means whenever a store is created, we dont need the one using facilty to send the owner by himself in detail rather this will be handled in the backend itself.
+
+. furhter this is imp. bcz we want to handle the control properly like its imp to avoid if someone assigns a store to the different user.
+
+. and in the practice i used simpler store serializer which is StoreSerializer1, used it for the create-update actions, and in the main store serializer which is StoreSerializers, used it for the read operations only and which were like as i nested the data, counting the products and also the information of the owner for example.
+
+# Product Validation:
+Then in the ProductSerializer1, i added both the field level and the object level validations like:
+-- the field level:
+
+def validate_price(self, value):
+    if value <= 0:
+        raise serializers.ValidationError('the price should be greater than zero')
+    return value
+
+def validate_quantity(self, value):
+    if value < 0:
+        raise serializers.ValidationError('the quantity cannot be zero')
+    return value
+
+. so these are the field level validations, to make sure the both fields are correct according to the validation.
+. Like in the first condition, the price should be positive means greater than one, and in the second condition it is the quantity cannot be negative, and similar to the price condition it is also like the count of product should be greater than zero. 
+
+-- Object-level validation:
+
+def validate(self, data):
+    store = data.get('store')
+    category = data.get('category')
+    name = data.get('name')
+    user = self.context['request'].user
+
+    if not store.is_active:
+        raise serializers.ValidationError('store is not active')
+
+    if store.owner != user:
+        raise serializers.ValidationError('the store owner can only add the product')
+
+    if category.store != store:
+        raise serializers.ValidationError('the category should be related to the store')
+
+    if Product.objects.filter(store=store, name=name).exists():
+        raise serializers.ValidationError('the product already exists in this store')
+    return data
+
+. And here simialrly i tried to check multiple conditions at once like:
+
+. The store should be active before adding products,
+. And only the owner of the store can add products to it,
+. Then the category should belong to the store in which the products are,
+. and the last one which is like the product name should be unique in the same store, means every store name should be different.
+
+# Category Validation:
+
+Then in the CategorySerializer1, i added the logic of validation to make sure that only the user can create the categories in their related store, not anyone else:
+
+def validate(self, data):
+    store = data.get('store')
+    user = self.context['request'].user
+
+    if store.owner != user:
+        raise serializers.ValidationError("You are not the owner of this store")
+    return data
+
+. So here this method is making sure that those users cannot create the categories for stores to which they dont belong.
+
+## Use of Nested Serializers and the Read-only Fields:
+And outisde this validation logic like related to the write operations as create, update, partial update, etc as yesterday i learnt about the use of nested serializers like in StoreSerializers added the products and the owner logic and in the ProductsSerializers added the store, category logic, for example:
+
+products = ProductSerializer1(many=True, read_only=True)
+owner = UsersSerializers(read_only=True)
+
+. so these serializers which are nested they were only displaying the related data without allowing the one handling data liek the cleint to modify it.
+
+-- For example, when we view a store, then we can see all the products and the owner details but bcz its read only so the handler which is client he cannot change any of these.
+
+so this is how here the read only and hte write only operations are working
