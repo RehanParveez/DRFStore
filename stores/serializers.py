@@ -13,6 +13,7 @@ class ProductSerializer1(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'quantity', 'store', 'category']
     
     def validate_price(self, value):
+        print("VALIDATE PRICE CALLED", value)
         if value <= 0:
             raise serializers.ValidationError('the price should be greater than zero')
         return value

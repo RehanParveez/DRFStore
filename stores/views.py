@@ -144,7 +144,7 @@ class ProductsViewset(viewsets.ModelViewSet):
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
     
-    # the most expensive products
+    # # the most expensive products
     @action(detail=False, methods=['get'])
     def expensive(self, request):
         products = self.get_queryset().order_by('-price')[:7]

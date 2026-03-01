@@ -21,8 +21,8 @@ class Category(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=20)
-    price = models.IntegerField()
-    quantity = models.IntegerField()
+    price = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField()
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name="products")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
     created_at = models.DateTimeField(auto_now_add=True)

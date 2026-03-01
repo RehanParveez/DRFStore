@@ -415,3 +415,6 @@ owner = UsersSerializers(read_only=True)
 -- For example, when we view a store, then we can see all the products and the owner details but bcz its read only so the handler which is client he cannot change any of these.
 
 so this is how here the read only and hte write only operations are working
+
+# Error Problem:
+after trying to fix the error blindly like using gpt for fixing the error, it was telling to check the access of the serilazer like are you accessing the serializer which has validation checks or maybe your validation method is not being called, in the end the real error was which is super easy yet i could not solve it for quite a long time, the error was i was trying to create hte product from the admin, so while the validation logic was in the api, but i was not calling it, so that was the error. in hte ned now tried checking all the validation methods and they are working according to the logic.
