@@ -10,7 +10,7 @@ class StoreSerializer1(serializers.ModelSerializer):
 class ProductSerializer1(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'quantity', 'store', 'category']
+        fields = ['id', 'name', 'price', 'quantity', 'store', 'category', 'image']
     
     def validate_price(self, value):
         print("VALIDATE PRICE CALLED", value)
@@ -74,4 +74,4 @@ class ProductsSerializers(serializers.ModelSerializer):
     category = CategorySerializers(read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'quantity', 'store', 'category', 'created_at']
+        fields = ['id', 'name', 'price', 'quantity', 'store', 'category', 'image', 'created_at']

@@ -17,6 +17,7 @@ from django.db.models import Sum, F, Count
 from django.db import connection
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from stores.throttles import Login, Refresh
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 
 # Create your views here.
 
@@ -124,6 +125,7 @@ class ProductsViewset(viewsets.ModelViewSet):
     
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
     pagination_class =ProductPagination
+    parser_classes = [FormParser, JSONParser, MultiPartParser]
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:

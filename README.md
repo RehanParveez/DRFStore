@@ -418,3 +418,119 @@ so this is how here the read only and hte write only operations are working
 
 # Error Problem:
 after trying to fix the error for a hour or so, like using gpt for fixing the error, and trying other was but it was telling to check the access of the serilazer like are you accessing the serializer which has validation checks or maybe your validation method is not being called, in the end the real error was which is super easy yet i could not solve it, and then the thought came like i was trying to create the product from the admin panel, so while the validation logic was in the api, but i was not using it to create the product, adn other validation checks like quantity, active store, different product in the same store, etc. so this was the error. in the end now tried checking all the validation methods and they are working according to the logic.
+
+## Use of get_serializer_class() method:
+
+# get_serializer_class()
+
+The important point is normally in drf while using the ModelViewSet we usually use only the one serializer class like:
+
+serializer_class = ProductsSerializers
+
+And while coming to the functionality this same serializers is used for all the important actions like:
+. The same serializer is used for GET action,
+. The same serializer is used for POST action,
+. The same serializer is used for PUT action,
+. And also the same serializer is used for PATCH action
+
+but like as i practiced yesterday the two different level serializers like for the nested information display and for the validation logic, so in the real world scenarios once should use the different serializers for different actions.
+
+Like for example:
+
+. when we create a product or update it, we should use the validation logic,
+. And in cases when we are only retrieving a product, like getting it, then we sshould use serializers with the nested details like information of store, information of the category.
+
+And in these cases the get_serializer_class() method is mainly used.
+
+# Example from this project:
+def get_serializer_class(self):
+    if self.action in ['create', 'update', 'partial_update']:
+        return ProductSerializer1 
+    return ProductsSerializers
+
+so this method simply means like:
+
+if the request is about the actions of:
+. POST (create)
+. PUT (update)
+. PATCH (partial_update)
+
+ then i used the ProductSerializer1 which has the validation logic and for the actions like:
+
+. GET list
+. GET retrieve
+i used the ProductsSerializers, which has mainly the nested information logic part.
+
+
+## Parsers Concept in DRF:
+
+So in this project, after using the validation logic and the nested serializers, i studied and practiced about the concept of Parsers in drf which is basically about understanding like before reaching the serializer in use how the incoming request data is processed.
+
+# Parsers
+And according to the official documentation of the drf, the parsers are mainly responsible for handling the incoming request body and then converting it into a data structure like dictionaries of Python and which are then can be accessed by using the request.data.
+
+this means, when a handler like client sends a request to the api:
+
+like the raw http request -> then the parser in use processes it -> then it converts it into the data of python -> and then it can be used as request.data
+
+and if we dont use parsers then the serializer in use wont receive any data properly.
+
+The commonly used parsers which also are used by default in drf, are:
+
+. JSONParser
+. FormParser
+. MultiPartParser
+
+By default means hese are enabled automatically and we can override these as well.
+
+And also here each parser works depending on the Content-Type header which is handler/client sending, like:
+
+. application/json related logic -> is handled by the JSONParser,
+. application/x-www-form-urlencoded related logic -> is handled by the FormParser,
+. and the multipart/form-data related logic -> is handled by the MultiPartParser
+
+-- so If a request is sent by a content type which is not supported by the view being used then error like:
+415 Unsupported Media Type occurs.
+
+
+## Practice of parsers in this project:
+
+After studying parsers i practiced parsers like firstly i added the image field in the product model in order to upload the image.
+
+image = models.ImageField(upload_to='products/', null=True, blank=True)
+
+after this ran the migrations, and then as uploading the image requires the media handling, so added related commands in the settings file:
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+after this in the project level urls.py file added the command:
+
+ + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+and this setup is about making sure that the uploaded images get stored properly and can be used.
+
+
+-- Then in order To handle the image uploads used parsers in the ProductsViewset as:
+
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+
+and then added parser_class as:
+parser_classes = [FormParser, JSONParser, MultiPartParser]
+
+Now out of these all parsers the:
+
+. The FormParser is about handling the submission of form whic is by standard,
+. The JSONParser is about handling the requests related to JSON data,
+. And the MultiPartParser is about handling the image/file uploading by using (multipart/form-data).
+
+-- Then i tested all these like first by uploading the images for some products again by using MultiPartParser and the offcourse FormParser for submitted the post form.
+
+Then practiced the parser of JSONParser alone, in order to understand how this parser gives the restriction behavior.
+
+parser_classes = [JSONParser]
+
+after this the api was gonna accept only the -> Content-Type: application/json, so when i attempted to submit the data in the browser using the form data and the multipart form it gave the error of:
+
+415 Unsupported Media Type -> and this occured bcz i was sending the request as multipart/form-data -> but the view was only allowing the application/json -> so this is why the request was being rejected, and after this switching to the raw JSON format, the request was working.
+
