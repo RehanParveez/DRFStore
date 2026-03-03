@@ -534,3 +534,101 @@ after this the api was gonna accept only the -> Content-Type: application/json, 
 
 415 Unsupported Media Type -> and this occured bcz i was sending the request as multipart/form-data -> but the view was only allowing the application/json -> so this is why the request was being rejected, and after this switching to the raw JSON format, the request was working.
 
+
+## Use of Middlewares:
+
+The Middleware in django/drf is like a way to handle the logic of requests and responses at global level of any project like even before they reach our view or after the view returns a response to us.
+
+so basically middleware classes are those that is placed b/w the handler/client request and then the response to it of the server.
+
+After studying the middlewares concept from the documentation and gpt as well, so the thing is middlewares can be used for the tasks like authentication, logging, or like checking the performance of the system, and even can be used for updating the cycle of the request/response of objects.
+
+And in this project, the three middleware classes are used and practiced like:
+
+1. Block Middleware:
+
+The BlockMiddleware is used firstly at the global level and it helps in stopping the inactive users from accessing the API.
+
+from django.http import JsonResponse
+
+class BlockMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated and not request.user.is_active:
+            return JsonResponse({'error': 'account is inactive'}, status=403)
+        return self.get_response(request)
+
+now here is the logic of:
+
+. user = request.user -> which is about getting the current user of our to make the request for any action,
+. now if the user.is_authenticated -> part is checking whether the user is logged in, 
+. then not user.is_active -> part is about checking whether the users account is vurrently not active,
+. so if the both of these conditions are true, then the middleware will quickly return the response of error like a 403 Forbidden response.
+. and finally the logic of return self.get_response(request) -> is being used for checking like if the user is active.
+
+# How it works then in the project:
+
+so mainly this process is like:
+
+when the user is inactive -> then the request action is stopped quickly like immediately, so in this case,
+
+. The viewset logic is never going to be performed/carried out, 
+. then the database being used it will be never accessed,
+. and also it directly returns a 403 response.
+
+2. Request Middleware:
+
+The RequestMiddleware is the one middleware which is designed in the system, in auch a way, like the task is to return and then also it will display the simple information about the each and every request being present.
+
+class RequestMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = request.user
+        if not user.is_authenticated:
+           user = None  
+        method = request.method
+        path = request.path
+        response = self.get_response(request)
+        status = response.status_code
+
+        print(f'{user} | {method} | {path} | status: {status}')
+        return response
+
+now here,
+-- user = request.user -> part is being used to get the user who is making the request, now If the user is not authenticated, then we give it the value of None.
+
+. method -> this part here is the HTTP method having actions like(GET, POST, PUT, DELETE) of the request,
+. path -> part here is refering to the path of url which is being accessed,
+. now response = self.get_response(request) -> part is mainly about executing the view and then getting a response from it,
+. then status = response.status_code -> this part is being used for the HTTP status of the response we are getting like ->  200, 404, 500.
+. And now the print statement will show like who did what according to the logic and it will use the response status.
+ 
+
+3. Response Middleware:
+
+The ResponseMiddleware is the middleware which is calculating like how much time the every request will take to execute itself, so:
+
+import time
+
+class ResponseMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        start_time = time.time()
+        response = self.get_response(request)
+        duration = time.time() - start_time
+        print(request.path, 'in', duration, 'sec')
+        return response
+
+now here the,
+. start_time = time.time() -> part will calculate the time of start and it will happen before processing the request,
+. response = self.get_response(request) -> now this part will execute our view and it will get the response from it,
+. duration = time.time() - start_time -> then this part will calculate the amount of time the request took beofre completing,
+. print(request.path, 'in', duration, 'sec') -> further this part will simply show/give the path and the duration of the request and response and the duration is going to be in seconds.
+. return response -> and finally this part will simply return the given response.
+

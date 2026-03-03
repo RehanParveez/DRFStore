@@ -52,6 +52,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'DRFStore.middleware.RequestMiddleware',
+    'DRFStore.middleware.BlockMiddleware',
+    'DRFStore.middleware.ResponseMiddleware',
 ]
 
 ROOT_URLCONF = 'DRFStore.urls'
