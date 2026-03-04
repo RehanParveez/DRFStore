@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'DRFStore.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'real_store',
+        'NAME': 'eCommerce',
         'USER': 'postgres',
         'PASSWORD': 'rehpostgre1',
         'HOST': 'localhost',

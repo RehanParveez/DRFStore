@@ -4,9 +4,9 @@ from django.urls import path, include
 from stores.views import StoresTokenObtainPairView, StoresTokenRefreshView
 
 router = DefaultRouter()
-router.register(r'Stores', StoresViewset, basename='stores')
-router.register(r'Categories', CategoryViewset, basename='categories')
-router.register(r'Products', ProductsViewset, basename='products')
+router.register(r'stores', StoresViewset, basename='stores')
+router.register(r'categories', CategoryViewset, basename='categories')
+router.register(r'products', ProductsViewset, basename='products')
 
 urlpatterns = [
     path('api/v1/', include(router.urls)),

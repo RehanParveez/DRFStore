@@ -632,3 +632,100 @@ now here the,
 . print(request.path, 'in', duration, 'sec') -> further this part will simply show/give the path and the duration of the request and response and the duration is going to be in seconds.
 . return response -> and finally this part will simply return the given response.
 
+
+## Use of Testing in Django/DRF:
+
+The concept of testing in django/drf is basically like a way to check if our code and the APIs are working properly. So main use of testing is like instead of manually calling our APIs every time and then checking them if they are returning the correct data or not, so instead of doing all of this we can write our tests which could do this automatically.
+
+And in django/drf, we can write our own made tests for our APIs by using the APITestCase class which is provided by the drf itself.
+
+Now after creating our tests when we run them, then:
+
+. The django will first create a temporary test database,
+. Then it will run all the code which is present inside our test methods.
+. Then it will check the output of the code relevant to what we expect.
+. And then finally it will delete the test database which was created at the start.
+
+So the main thing is this help us to quickly verify our given API logic, and this too without really affecting our original database.
+
+Now while studying about the testing, the first thing was the method of setup for the product api tests is important so this simply means:
+
+Like before testing our APIs, we first need some data in the database so we can use it. So thats why in start we use the setUp() method in our test class.
+
+So in setUp() method i created different kind of data like related to:
+
+# Users:
+self.user1 = User.objects.create_user(username='user1', email='user1@test.com', password='pass12312')
+self.user2 = User.objects.create_user(username='user2', email='user2@test.com', password='pass12312')
+self.staff_user = User.objects.create_user(username='admin', email='admin@test.com', password='pass12312', is_staff=True)
+
+. here user1 and the user2 are the normal users,
+. and the staff_user here is a staff/admin user and who has the control like who can see all products, and whom not.
+
+# Stores:
+self.store1 = Store.objects.create(name="Store1", city="CityA", owner=self.user1)
+self.store2 = Store.objects.create(name="Store2", city="CityB", owner=self.user2)
+
+Now here the each store present it belongs to a particular user.
+
+# Categories:
+self.category1 = Category.objects.create(name="Category1", store=self.store1)
+self.category2 = Category.objects.create(name="Category2", store=self.store2)
+
+And then here all the categories are linked with the stores.
+
+# Products:
+self.product1 = Product.objects.create(name="Product1", price=100, quantity=3, store=self.store1, category=self.category1)
+self.product2 = Product.objects.create(name="Product2", price=500, quantity=10, store=self.store2, category=self.category2)
+
+And here the products simply belong to a store and the category.
+
+also for testing here the product1 has a low quantity of 3, so this is helpful for testing logic like low stock filtering.
+
+
+# Now the API tests:
+
+1. test_user_data
+
+firstly this test is about checking like if a normal user can see only their products or not.
+
+so here what is happening? like first its:
+
+. authenticating as the user1.
+. then its calling the GET API which has path of -> /stores/api/v1/products/.
+. so on running it checks like whether the response status is 200 OK which simply means success,
+and the Check happens like the users can only see their own products.
+
+2. test_owner_create
+
+Next this test is about checking whether a owner of store can create a new product or not?
+
+in this first it will:
+
+authenticate as user1,
+then it will send a POST request to path of -> /stores/api/v1/products/ with the data of product,
+also it will verify like whether the status of response is 201  which means success like the product is created,
+and lastly it will check that the total number of products is inc. by 1.
+
+3. test_low_stock
+
+Next this test is about checking the low stock products in the API.
+
+In this test it will:
+
+first again authenticate as the user1,
+then call the GET API with path of -> /stores/api/v1/products/low_stock/,
+then it is verifying that the status of response is 200 OK which is success,
+it will check that the products only with the low quantity are shown.
+
+4. test_staff_control
+
+Lastly this test is about checking like if a staff/admin user can see all the products, without the fact of like to which store it belongs.
+
+This test will again simply:
+
+. authenticate as the staff_user,
+. then it will Call GET with the path of -> /stores/api/v1/products/,
+. next it will verify the point that status of response is 200 OK, meaning success.
+. and lastly it will simply check like whether the response has all the given products or not.
+

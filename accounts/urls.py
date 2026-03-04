@@ -4,7 +4,7 @@ from django.urls import path, include
 from accounts.views import AccountsTokenObtainPairView, AccountsTokenRefreshView
 
 router = DefaultRouter()
-router.register(r'Users', UsersViewset, basename='users')
+router.register(r'users', UsersViewset, basename='users')
 
 urlpatterns = [
     path('api/v1/', include(router.urls)),
